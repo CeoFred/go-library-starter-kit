@@ -30,11 +30,10 @@ func TestGetData(t *testing.T) {
 
 	// Convert mock response to JSON
 	mockResponseBody, _ := json.Marshal(mockResponse)
-	
 
 	// Setup mock client
 	mockClient := httpclient.NewMockClient()
-	
+
 	mockClient.SetGetFunc(func(ctx context.Context, path string) (*http.Response, error) {
 		rec := httptest.NewRecorder()
 		rec.WriteHeader(http.StatusOK)

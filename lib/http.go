@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	// FastOTPClient is the default HTTP client for the FastOtp package.
-	FastOTPClient = &http.Client{
+	// defaultClient is the default HTTP client for the package.
+	defaultClient = &http.Client{
 		Timeout: time.Duration(15) * time.Second,
 		Transport: &http.Transport{
 			MaxIdleConns:        10,
@@ -21,7 +21,7 @@ var (
 	}
 )
 
-// APIClient is a wrapper for making HTTP requests to the fastotp API.
+// APIClient is a wrapper for making HTTP requests to the API.
 type APIClient struct {
 	baseURL string
 	apiKey  string
@@ -33,11 +33,22 @@ func NewAPIClient(baseURL, apiKey string) *APIClient {
 	return &APIClient{
 		baseURL: baseURL,
 		apiKey:  apiKey,
-		client:  FastOTPClient,
+		client:  defaultClient,
 	}
 }
 
-func (c *APIClient) Put(ctx context.Context, endpoint string, payload interface{}) (*http.Response, error) {
+// Helper function to convert variadic headers to a map
+func headersToMap(headers ...map[string]string) map[string]string {
+	headerMap := make(map[string]string)
+	for _, hdrs := range headers {
+		for key, value := range hdrs {
+			headerMap[key] = value
+		}
+	}
+	return headerMap
+}
+
+func (c *APIClient) Put(ctx context.Context, endpoint string, payload interface{}, headers ...map[string]string) (*http.Response, error) {
 	url := c.baseURL + endpoint
 
 	// Convert payload to JSON
@@ -46,17 +57,20 @@ func (c *APIClient) Put(ctx context.Context, endpoint string, payload interface{
 		return nil, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	for key, value := range headersToMap(headers...) {
+		req.Header.Set(key, value)
+	}
 
 	return c.client.Do(req)
 }
 
-func (c *APIClient) Patch(ctx context.Context, endpoint string, payload interface{}) (*http.Response, error) {
+func (c *APIClient) Patch(ctx context.Context, endpoint string, payload interface{}, headers ...map[string]string) (*http.Response, error) {
 	url := c.baseURL + endpoint
 
 	// Convert payload to JSON
@@ -65,18 +79,21 @@ func (c *APIClient) Patch(ctx context.Context, endpoint string, payload interfac
 		return nil, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	for key, value := range headersToMap(headers...) {
+		req.Header.Set(key, value)
+	}
 
 	return c.client.Do(req)
 }
 
 // Post sends a POST request to the specified endpoint with the given payload.
-func (c *APIClient) Post(ctx context.Context, endpoint string, payload interface{}) (*http.Response, error) {
+func (c *APIClient) Post(ctx context.Context, endpoint string, payload interface{}, headers ...map[string]string) (*http.Response, error) {
 	url := c.baseURL + endpoint
 
 	// Convert payload to JSON
@@ -91,11 +108,14 @@ func (c *APIClient) Post(ctx context.Context, endpoint string, payload interface
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	for key, value := range headersToMap(headers...) {
+		req.Header.Set(key, value)
+	}
 
 	return c.client.Do(req)
 }
 
-func (c *APIClient) Delete(ctx context.Context, endpoint string, payload interface{}) (*http.Response, error) {
+func (c *APIClient) Delete(ctx context.Context, endpoint string, payload interface{}, headers ...map[string]string) (*http.Response, error) {
 	url := c.baseURL + endpoint
 
 	// Convert payload to JSON
@@ -110,15 +130,16 @@ func (c *APIClient) Delete(ctx context.Context, endpoint string, payload interfa
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	for key, value := range headersToMap(headers...) {
+		req.Header.Set(key, value)
+	}
 
 	return c.client.Do(req)
 }
 
 // Get sends a GET request to the specified endpoint, appending id as a path parameter
-func (c *APIClient) Get(ctx context.Context, path string) (*http.Response, error) {
+func (c *APIClient) Get(ctx context.Context, path string, headers ...map[string]string) (*http.Response, error) {
 	url := fmt.Sprintf("%s%s", c.baseURL, path)
-
-	fmt.Println(url)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -126,6 +147,9 @@ func (c *APIClient) Get(ctx context.Context, path string) (*http.Response, error
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	for key, value := range headersToMap(headers...) {
+		req.Header.Set(key, value)
+	}
 
 	return c.client.Do(req)
 }

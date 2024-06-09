@@ -34,7 +34,7 @@ func (e ErrorResponse) Message() string {
 type UserDataResponse struct {
 	BaseResponse
 	User struct {
-		FirstName  string `json:"first_name"`
+		FirstName string `json:"first_name"`
 	} `json:"data"`
 }
 
